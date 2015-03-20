@@ -1,0 +1,107 @@
+<!doctype html>
+<meta charset="utf-8">
+<head>
+
+<title>ARCHER NET</title>
+
+<meta property="og:image" content="http://david733.github.io/archernet/ScreenClip.png" />
+<meta property="og:title" content="ARCHER NET" />
+<meta property="og:url" content="http://david733.github.io/archernet/" />
+<meta property="og:description" content="A visualization of every shown or implied relationship between the character's of the FX show Archer." />
+    
+<script src="js/d3.js"></script>
+<script src="js/d3plus.js"></script>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+
+<style>
+    html, body { height: 100% }
+    
+    #viz { 
+        height: 95%;
+        min-height: 600px;
+        min-width: 780px;
+    }
+    
+</style>
+</head>
+<body>
+<div id="viz"></div>
+<script>
+    
+    var links, nodes;
+    var edgeOpacities = {   'hookup': 0.4,
+                            'relationship': 0.2,
+                        };
+    
+    d3.json("links.json", function(graph) {
+        
+        links = graph.links;
+        nodes = {};
+        
+        // Compute the distinct nodes from the links.
+        links.forEach(function(link) {
+            addNode(link.source, link, link.target);
+            addNode(link.target, link, link.source);
+            
+        });
+
+        
+        var visualization = d3plus.viz()
+        .container("#viz")
+        .type("rings")
+        .dev(false)
+        .edges({
+            "color": "#AAA",
+            "opacity": function(d) {
+                return edgeOpacities[d.type] ? edgeOpacities[d.type] : 0.1;
+            },
+            "value": links,
+        })
+        .data(d3.values(nodes))
+        .tooltip({
+            "html": function(d) {
+                var neighbors = nodes[d].neighbors;
+                var html = "<table class='table table-striped'>";
+                html += "<tr><th>Partner</th><th>Type</th><th>Episode</th></tr>";
+                neighbors.forEach(function(n) {
+                    html += "<tr><td>" + n.name + "</td><td>" + n.link.type + "</td><td>" + n.link.episode + "</td></tr>";
+                });
+                html += "</table>";
+                html += '<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fdavid733.github.io%2Farchernet%2F&amp;width&amp;layout=button_count&amp;action=like&amp;show_faces=false&amp;share=true&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; height:21px;" allowTransparency="true"></iframe>';
+                return html;
+            },
+            "connections": false,
+            "large": 280
+        })
+        .size("degree")
+        .id("name")
+        .focus("Sterling Archer")
+        .title({
+            "value": "A visualization of every shown or implied relationship between the character's of the FX show Archer. Will be updated occasionally as I catch up with new episodes. Powered by d3plus.js; click this footer for code and to suggest corrections. ©2015 David Lee",
+            "position": "bottom",
+            "link": "https://github.com/david733/archernet",
+            "font": {"size": 10},
+        })
+        .draw();
+    });
+    
+    function addNode(n, link, m) {
+        if (!(n in nodes)) {
+            nodes[n] = {};
+            nodes[n].name = n;
+            nodes[n].degree = 1;
+            nodes[n].neighbors = [ {"name": m, "link": link} ];
+        }
+        else {
+            nodes[n].degree += 1;
+            nodes[n].neighbors.push({"name": m, "link": link});
+        }
+    }
+
+</script>
+    
+</body>
